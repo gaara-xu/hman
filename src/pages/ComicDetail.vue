@@ -19,7 +19,20 @@
         <div class="detail-desc">{{ detail.hmanremake }}</div>
         <div class="detail-btns">
           <van-button type="primary" icon="book-o" size="small">开始阅读</van-button>
-          <van-button type="default" icon="star-o" size="small">收藏</van-button>
+          <van-button
+            v-if="!detail.bookmark"
+            type="default"
+            icon="star-o"
+            size="small"
+            @click="addCollect"
+          >收藏</van-button>
+          <van-button
+            v-else
+            type="danger"
+            icon="star"
+            size="small"
+            @click="removeCollect"
+          >取消收藏</van-button>
           <van-button
             v-if="!isFinished"
             type="warning"
@@ -64,6 +77,26 @@ export default {
     this.fetchDetail();
   },
   methods: {
+    async addCollect() {
+      if (!this.detail || !this.detail.id) return;
+      try {
+        await axios.get(`http://192.168.3.110/vuehman/addHmanCollect/${this.detail.id}`);
+        this.$toast && this.$toast.success('已收藏');
+        this.fetchDetail();
+      } catch (e) {
+        this.$toast && this.$toast.fail('收藏失败');
+      }
+    },
+    async removeCollect() {
+      if (!this.detail || !this.detail.id) return;
+      try {
+        await axios.get(`http://192.168.3.110/vuehman/removeHmanCollect/${this.detail.id}`);
+        this.$toast && this.$toast.success('已取消收藏');
+        this.fetchDetail();
+      } catch (e) {
+        this.$toast && this.$toast.fail('取消收藏失败');
+      }
+    },
     goRead(chapter) {
       // 优先用chapter.id，若无则回退macpath
       let id = chapter.id || '';

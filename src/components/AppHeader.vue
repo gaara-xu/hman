@@ -3,13 +3,13 @@
     <div class="header-menu-row">
       <span class="site-title">韩漫库</span>
       <span class="site-menu" :class="{active: isActive('update')}" @click="go('/')">更新</span>
-      <span class="site-menu" :class="{active: isActive('category')}" @click="go('/category')">分类</span>
-      <span class="site-menu" :class="{active: isActive('favorite')}" @click="go('/favorite')">收藏</span>
+      <span class="site-menu" :class="{active: isActive('category')}" @click="go('/tag')">分类</span>
+      <span class="site-menu" :class="{active: isActive('favorite')}" @click="go('/collect')">收藏</span>
     </div>
     <div class="header-search-row">
       <van-search
         :model-value="keyword"
-        @update:model-value="val => $emit('update:keyword', val)"
+        @update:model-value="onInput"
         placeholder="请输入漫画名称或作者名"
         show-action
         action-text="搜索"
@@ -29,13 +29,18 @@ export default {
   },
   emits: ['update:keyword', 'search', 'clear'],
   methods: {
+    onInput(val) {
+      this.$emit('update:keyword', val);
+      // 输入即搜
+      this.$emit('search', val);
+    },
     go(path) {
       if (this.$route.path !== path) this.$router.push(path)
     },
     isActive(type) {
       if (type === 'update') return this.$route.path === '/';
-      if (type === 'category') return this.$route.path.startsWith('/category');
-      if (type === 'favorite') return this.$route.path.startsWith('/favorite');
+      if (type === 'category') return this.$route.path.startsWith('/tag');
+      if (type === 'favorite') return this.$route.path.startsWith('/collect');
       return false;
     },
     onSearch() {

@@ -20,9 +20,15 @@ export default {
     }
   },
   methods: {
-    onHeaderSearch() {
-      // 触发子页面的搜索
-      this.$root.$emit('header-search');
+    onHeaderSearch(keyword) {
+      // 跳转到搜索结果页并带上 keyword 查询参数
+      if (keyword && keyword.trim()) {
+        this.headerKeyword = keyword;
+        this.$router.push({ name: 'SearchResult', query: { keyword } });
+      } else {
+        this.headerKeyword = '';
+        this.$router.push({ name: 'SearchResult' });
+      }
     },
     onHeaderClear() {
       this.$root.$emit('header-clear');

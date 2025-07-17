@@ -1,7 +1,7 @@
 <template>
   <div class="home">
     <div class="update-info">
-      <span>今天更新了 <span class="update-count">{{ comics.length }}</span> 本漫画，持续更新中...</span>
+      <span>已收藏 <span class="update-count">{{ comics.length }}</span> 本漫画</span>
     </div>
     <div class="comic-list-grid">
       <div v-for="comic in comics" :key="comic.id" class="comic-card">
@@ -15,72 +15,44 @@
             更新：<span class="update-ep">{{ comic.hmanupdate }}</span>
           </template>
         </div>
-        <div v-if="comic.hmanupdate && comic.macpath" class="comic-read-btn">
-          <van-button type="primary" size="small" @click.stop="goRead(comic)">
-            {{ comic.hmanupdate }}
-          </van-button>
+        <div class="comic-collect-btn">
+          <van-button type="danger" size="small" @click.stop="removeCollect(comic.id)">取消收藏</van-button>
         </div>
       </div>
     </div>
-    <div v-if="!comics.length" class="no-data">暂无漫画数据</div>
+    <div v-if="!comics.length" class="no-data">暂无收藏漫画</div>
   </div>
 </template>
 
 <script>
 import axios from 'axios';
-
 export default {
-  name: 'HomePage',
-  props: ['headerKeyword'],
+  name: 'CollectPage',
   data() {
     return {
-      comics: [],
-      localKeyword: ''
+      comics: []
     }
   },
-  computed: {
-    searchKeyword() {
-      // 优先用路由参数 keyword
-      return this.$route.query.keyword || this.localKeyword || '';
-    }
-  },
-  watch: {},
   created() {
-    this.fetchDailyUpdate();
+    this.fetchCollect();
   },
-  // Vue3不再使用事件总线，相关代码已移除
   methods: {
-    goRead(comic) {
-      // comic.macpath 可能为 https://se8.us/index.php/chapter/888900345，需提取最后的数字id
-      let id = '';
-      if (comic.macpath) {
-        const match = comic.macpath.match(/(\d+)$/);
-        if (match) id = match[1];
-      }
-      if (id) {
-        this.$router.push({ name: 'ComicReader', params: { id } });
-      }
-    },
-    async fetchDailyUpdate() {
+    async fetchCollect() {
       try {
-        const res = await axios.get('http://192.168.3.110/vuehman/getDailyUpdate');
+        const res = await axios.get('http://192.168.3.110/vuehman/getHmanCollect');
         this.comics = Array.isArray(res.data) ? res.data : (res.data.list || []);
       } catch (e) {
-        this.$toast && this.$toast.fail('获取更新失败');
+        this.$toast && this.$toast.fail('获取收藏失败');
       }
     },
-    async onSearch() {
-      const keyword = this.searchKeyword;
-      if (!keyword) return;
+    async removeCollect(id) {
       try {
-        const res = await axios.get(`http://192.168.3.110/vuehman/searchAllByHmanname/${encodeURIComponent(keyword)}`);
-        this.comics = Array.isArray(res.data) ? res.data : (res.data.list || []);
+        await axios.get(`http://192.168.3.110/vuehman/removeHmanCollect/${id}`);
+        this.$toast && this.$toast.success('已取消收藏');
+        this.fetchCollect();
       } catch (e) {
-        this.$toast && this.$toast.fail('搜索失败');
+        this.$toast && this.$toast.fail('取消收藏失败');
       }
-    },
-    onClear() {
-      this.fetchDailyUpdate();
     },
     goDetail(id) {
       this.$router.push({ name: 'ComicDetail', params: { id } });
@@ -90,42 +62,10 @@ export default {
 </script>
 
 <style scoped>
+/* 复用 Home.vue 的样式，可根据需要调整 */
 .home {
   background: #fff;
   min-height: 100vh;
-}
-.home-header {
-  display: flex;
-  align-items: center;
-  padding: 16px 16px 0 16px;
-  background: #fff;
-  flex-wrap: wrap;
-}
-.logo {
-  width: 40px;
-  height: 40px;
-  margin-right: 8px;
-}
-.site-title {
-  font-size: 22px;
-  font-weight: bold;
-  margin-right: 24px;
-  color: #d32f2f;
-}
-.site-menu {
-  margin-right: 18px;
-  font-size: 16px;
-  color: #333;
-  cursor: pointer;
-}
-.site-menu.active {
-  color: #ff5722;
-  border-bottom: 2px solid #ff5722;
-}
-.home-search {
-  flex: 1;
-  margin-left: 24px;
-  min-width: 220px;
 }
 .update-info {
   padding: 12px 16px 0 16px;
@@ -183,23 +123,15 @@ export default {
 .update-ep {
   color: #ff5722;
 }
+.comic-collect-btn {
+  margin-top: 8px;
+}
 .no-data {
   text-align: center;
   color: #888;
   padding: 32px 0;
 }
 @media (max-width: 600px) {
-  .home-header {
-    flex-direction: column;
-    align-items: flex-start;
-    padding: 12px 8px 0 8px;
-  }
-  .home-search {
-    margin-left: 0;
-    width: 100%;
-    min-width: 0;
-    margin-top: 8px;
-  }
   .comic-list-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 16px 8px;

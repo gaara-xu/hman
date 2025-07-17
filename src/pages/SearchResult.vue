@@ -1,7 +1,7 @@
 <template>
   <div class="home">
     <div class="update-info">
-      <span>今天更新了 <span class="update-count">{{ comics.length }}</span> 本漫画，持续更新中...</span>
+      <span>搜索到 <span class="update-count">{{ comics.length }}</span> 本相关漫画</span>
     </div>
     <div class="comic-list-grid">
       <div v-for="comic in comics" :key="comic.id" class="comic-card">
@@ -20,9 +20,13 @@
             {{ comic.hmanupdate }}
           </van-button>
         </div>
+        <div class="comic-collect-btn">
+          <van-button v-if="!comic.collected" type="warning" size="small" @click.stop="addCollect(comic.id)">收藏</van-button>
+          <van-button v-else type="danger" size="small" @click.stop="removeCollect(comic.id)">取消收藏</van-button>
+        </div>
       </div>
     </div>
-    <div v-if="!comics.length" class="no-data">暂无漫画数据</div>
+    <div v-if="!comics.length" class="no-data">暂无搜索结果</div>
   </div>
 </template>
 
@@ -30,28 +34,31 @@
 import axios from 'axios';
 
 export default {
-  name: 'HomePage',
-  props: ['headerKeyword'],
+  name: 'SearchResult',
   data() {
     return {
       comics: [],
-      localKeyword: ''
+      keyword: ''
     }
   },
-  computed: {
-    searchKeyword() {
-      // 优先用路由参数 keyword
-      return this.$route.query.keyword || this.localKeyword || '';
+  watch: {
+    '$route.query.keyword': {
+      immediate: true,
+      handler(val) {
+        this.keyword = val || '';
+        if (this.keyword.trim()) {
+          this.onSearch();
+        } else {
+          this.comics = [];
+        }
+      }
     }
   },
-  watch: {},
-  created() {
-    this.fetchDailyUpdate();
-  },
-  // Vue3不再使用事件总线，相关代码已移除
   methods: {
+    goHome() {
+      this.$router.push({ path: '/' });
+    },
     goRead(comic) {
-      // comic.macpath 可能为 https://se8.us/index.php/chapter/888900345，需提取最后的数字id
       let id = '';
       if (comic.macpath) {
         const match = comic.macpath.match(/(\d+)$/);
@@ -61,71 +68,50 @@ export default {
         this.$router.push({ name: 'ComicReader', params: { id } });
       }
     },
-    async fetchDailyUpdate() {
-      try {
-        const res = await axios.get('http://192.168.3.110/vuehman/getDailyUpdate');
-        this.comics = Array.isArray(res.data) ? res.data : (res.data.list || []);
-      } catch (e) {
-        this.$toast && this.$toast.fail('获取更新失败');
-      }
+    goDetail(id) {
+      this.$router.push({ name: 'ComicDetail', params: { id } });
     },
     async onSearch() {
-      const keyword = this.searchKeyword;
-      if (!keyword) return;
+      if (!this.keyword) return;
       try {
-        const res = await axios.get(`http://192.168.3.110/vuehman/searchAllByHmanname/${encodeURIComponent(keyword)}`);
-        this.comics = Array.isArray(res.data) ? res.data : (res.data.list || []);
+        const res = await axios.get(`http://192.168.3.110/vuehman/searchAllByHmanname/${encodeURIComponent(this.keyword)}`);
+        let list = Array.isArray(res.data) ? res.data : (res.data.list || []);
+        // 查询收藏列表，标记已收藏
+        const collectRes = await axios.get('http://192.168.3.110/vuehman/getHmanCollect');
+        const collectIds = new Set((Array.isArray(collectRes.data) ? collectRes.data : (collectRes.data.list || [])).map(item => item.id));
+        list.forEach(item => { item.collected = collectIds.has(item.id); });
+        this.comics = list;
       } catch (e) {
         this.$toast && this.$toast.fail('搜索失败');
       }
     },
-    onClear() {
-      this.fetchDailyUpdate();
+    async addCollect(id) {
+      try {
+        await axios.get(`http://192.168.3.110/vuehman/addHmanCollect/${id}`);
+        this.$toast && this.$toast.success('已收藏');
+        this.onSearch();
+      } catch (e) {
+        this.$toast && this.$toast.fail('收藏失败');
+      }
     },
-    goDetail(id) {
-      this.$router.push({ name: 'ComicDetail', params: { id } });
-    }
+    async removeCollect(id) {
+      try {
+        await axios.get(`http://192.168.3.110/vuehman/removeHmanCollect/${id}`);
+        this.$toast && this.$toast.success('已取消收藏');
+        this.onSearch();
+      } catch (e) {
+        this.$toast && this.$toast.fail('取消收藏失败');
+      }
+    },
   }
 }
 </script>
 
 <style scoped>
+/* 复用 Home.vue 的样式，可根据需要调整 */
 .home {
   background: #fff;
   min-height: 100vh;
-}
-.home-header {
-  display: flex;
-  align-items: center;
-  padding: 16px 16px 0 16px;
-  background: #fff;
-  flex-wrap: wrap;
-}
-.logo {
-  width: 40px;
-  height: 40px;
-  margin-right: 8px;
-}
-.site-title {
-  font-size: 22px;
-  font-weight: bold;
-  margin-right: 24px;
-  color: #d32f2f;
-}
-.site-menu {
-  margin-right: 18px;
-  font-size: 16px;
-  color: #333;
-  cursor: pointer;
-}
-.site-menu.active {
-  color: #ff5722;
-  border-bottom: 2px solid #ff5722;
-}
-.home-search {
-  flex: 1;
-  margin-left: 24px;
-  min-width: 220px;
 }
 .update-info {
   padding: 12px 16px 0 16px;
@@ -189,17 +175,6 @@ export default {
   padding: 32px 0;
 }
 @media (max-width: 600px) {
-  .home-header {
-    flex-direction: column;
-    align-items: flex-start;
-    padding: 12px 8px 0 8px;
-  }
-  .home-search {
-    margin-left: 0;
-    width: 100%;
-    min-width: 0;
-    margin-top: 8px;
-  }
   .comic-list-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 16px 8px;
