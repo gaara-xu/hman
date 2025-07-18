@@ -48,9 +48,9 @@
         <van-button
           v-for="chapter in chapters"
           :key="chapter.id"
-          type="default"
+          :type="isCurrentRead(chapter.id) ? 'success' : 'default'"
           size="small"
-          class="chapter-btn"
+          :class="['chapter-btn', { 'current-read': isCurrentRead(chapter.id) }]"
           @click="goRead(chapter)"
         >
           {{ chapter.strb || chapter.levelname }}
@@ -71,6 +71,11 @@ export default {
       detail: null,
       chapters: [],
       isFinished: false
+    }
+  },
+  computed: {
+    currentReadId() {
+      return this.detail && this.detail.var3 ? String(this.detail.var3) : '';
     }
   },
   created() {
@@ -96,6 +101,9 @@ export default {
       } catch (e) {
         this.$toast && this.$toast.fail('取消收藏失败');
       }
+    },
+    isCurrentRead(chapterId) {
+      return String(chapterId) === this.currentReadId;
     },
     goRead(chapter) {
       // 优先用chapter.id，若无则回退macpath
@@ -241,6 +249,11 @@ export default {
 }
 .chapter-btn:hover {
   box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+}
+.current-read {
+  background: #e0f7fa !important;
+  color: #009688 !important;
+  border: 1.5px solid #009688 !important;
 }
 .no-data {
   text-align: center;
