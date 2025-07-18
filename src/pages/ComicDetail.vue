@@ -75,7 +75,7 @@ export default {
   },
   computed: {
     currentReadId() {
-      return this.detail && this.detail.var3 ? String(this.detail.var3) : '';
+      return this.detail && this.detail.readhistory ? String(this.detail.readhistory) : '';
     }
   },
   created() {
