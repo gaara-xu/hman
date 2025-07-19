@@ -38,14 +38,27 @@ export default {
   },
   computed: {
     sortedImages() {
-      // 按图片url中的序号排序
-      return this.images.slice().sort((a, b) => {
-        const getNum = url => {
-          const m = url.url.match(/\/(\d+)-/);
-          return m ? parseInt(m[1], 10) : 0;
-        };
-        return getNum(a) - getNum(b);
-      });
+      // 特殊处理《一人之下》图片顺序
+      if (this.hman && (this.hman.hmanname === '一人之下' || this.hman.name === '一人之下' || this.hman.title === '一人之下')) {
+        // 按 xxx-数字.jpg 的数字部分升序排序
+        return this.images.slice().sort((a, b) => {
+          const getNum = url => {
+            // 匹配 -数字.jpg
+            const m = url.url.match(/-(\d+)\.(jpg|jpeg|png|webp|gif)$/i);
+            return m ? parseInt(m[1], 10) : 0;
+          };
+          return getNum(a) - getNum(b);
+        });
+      } else {
+        // 默认按 1-xxx.jpg 的 1 升序排序
+        return this.images.slice().sort((a, b) => {
+          const getNum = url => {
+            const m = url.url.match(/\/(\d+)-/);
+            return m ? parseInt(m[1], 10) : 0;
+          };
+          return getNum(a) - getNum(b);
+        });
+      }
     }
   },
   created() {
@@ -56,6 +69,7 @@ export default {
       immediate: false,
       handler() {
         this.fetchPage();
+        window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
       }
     }
   },
