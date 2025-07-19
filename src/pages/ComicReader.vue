@@ -176,7 +176,7 @@ export default {
 .comic-img {
   width: 100%;
   max-width: 900px;
-  margin-bottom: 8px;
+  margin-bottom: 0;
   background: #eee;
   border-radius: 4px;
 }
