@@ -5,6 +5,8 @@
       <span class="site-menu" :class="{active: isActive('update')}" @click="go('/')">更新</span>
       <span class="site-menu" :class="{active: isActive('category')}" @click="go('/tag')">分类</span>
       <span class="site-menu" :class="{active: isActive('favorite')}" @click="go('/collect')">收藏</span>
+      <span class="site-menu" :class="{active: isActive('mp3long')}" @click="go('/mp3long')">MP3长篇小说</span>
+      <span class="site-menu" :class="{active: isActive('mp3short')}" @click="go('/mp3short')">MP3短篇</span>
     </div>
     <div class="header-search-row">
       <van-search
@@ -41,6 +43,8 @@ export default {
       if (type === 'update') return this.$route.path === '/';
       if (type === 'category') return this.$route.path.startsWith('/tag');
       if (type === 'favorite') return this.$route.path.startsWith('/collect');
+      if (type === 'mp3long') return this.$route.path.startsWith('/mp3long');
+      if (type === 'mp3short') return this.$route.path.startsWith('/mp3short');
       return false;
     },
     onSearch() {
