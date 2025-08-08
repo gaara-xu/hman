@@ -85,7 +85,7 @@ export default {
     async addCollect() {
       if (!this.detail || !this.detail.id) return;
       try {
-        await axios.get(`http://192.168.3.110/vuehman/addHmanCollect/${this.detail.id}`);
+        await axios.get(`http://192.168.3.110:8080/vuehman/addHmanCollect/${this.detail.id}`);
         this.$toast && this.$toast.success('已收藏');
         this.fetchDetail();
       } catch (e) {
@@ -95,7 +95,7 @@ export default {
     async removeCollect() {
       if (!this.detail || !this.detail.id) return;
       try {
-        await axios.get(`http://192.168.3.110/vuehman/removeHmanCollect/${this.detail.id}`);
+        await axios.get(`http://192.168.3.110:8080/vuehman/removeHmanCollect/${this.detail.id}`);
         this.$toast && this.$toast.success('已取消收藏');
         this.fetchDetail();
       } catch (e) {
@@ -123,7 +123,7 @@ export default {
     async fetchDetail() {
       const id = this.$route.params.id;
       try {
-        const res = await axios.get(`http://192.168.3.110/vuehman/getHmanDetail/${id}`);
+        const res = await axios.get(`http://192.168.3.110:8080/vuehman/getHmanDetail/${id}`);
         if (res.data && res.data.hmanDetail) {
           res.data.hmanDetail.hmanupdate = this.cleanText(res.data.hmanDetail.hmanupdate);
           // 判断完结状态
@@ -145,7 +145,7 @@ export default {
     async setFinished() {
       if (!this.detail || !this.detail.id) return;
       try {
-        await axios.get(`http://192.168.3.110/vuehman/updateHmanoverById/${this.detail.id}`);
+        await axios.get(`http://192.168.3.110:8080/vuehman/updateHmanoverById/${this.detail.id}`);
         this.isFinished = true;
         this.$toast && this.$toast.success('已设为完结');
       } catch (e) {

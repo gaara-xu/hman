@@ -74,10 +74,10 @@ export default {
     async onSearch() {
       if (!this.keyword) return;
       try {
-        const res = await axios.get(`http://192.168.3.110/vuehman/searchAllByHmanname/${encodeURIComponent(this.keyword)}`);
+        const res = await axios.get(`http://192.168.3.110:8080/vuehman/searchAllByHmanname/${encodeURIComponent(this.keyword)}`);
         let list = Array.isArray(res.data) ? res.data : (res.data.list || []);
         // 查询收藏列表，标记已收藏
-        const collectRes = await axios.get('http://192.168.3.110/vuehman/getHmanCollect');
+        const collectRes = await axios.get('http://192.168.3.110:8080/vuehman/getHmanCollect');
         const collectIds = new Set((Array.isArray(collectRes.data) ? collectRes.data : (collectRes.data.list || [])).map(item => item.id));
         list.forEach(item => { item.collected = collectIds.has(item.id); });
         this.comics = list;
@@ -87,7 +87,7 @@ export default {
     },
     async addCollect(id) {
       try {
-        await axios.get(`http://192.168.3.110/vuehman/addHmanCollect/${id}`);
+        await axios.get(`http://192.168.3.110:8080/vuehman/addHmanCollect/${id}`);
         this.$toast && this.$toast.success('已收藏');
         this.onSearch();
       } catch (e) {
@@ -96,7 +96,7 @@ export default {
     },
     async removeCollect(id) {
       try {
-        await axios.get(`http://192.168.3.110/vuehman/removeHmanCollect/${id}`);
+        await axios.get(`http://192.168.3.110:8080/vuehman/removeHmanCollect/${id}`);
         this.$toast && this.$toast.success('已取消收藏');
         this.onSearch();
       } catch (e) {

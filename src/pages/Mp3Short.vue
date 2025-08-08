@@ -27,7 +27,7 @@ export default {
   methods: {
     async fetchMp3s() {
       try {
-        const res = await axios.get('http://192.168.3.110/vuehman/getMp3List');
+        const res = await axios.get('http://192.168.3.110:8080/vuehman/getMp3List');
         this.mp3s = res.data || [];
       } catch (e) {
         this.mp3s = [];

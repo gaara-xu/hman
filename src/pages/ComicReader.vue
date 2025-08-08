@@ -58,7 +58,7 @@ export default {
     async fetchPage() {
       const id = this.$route.params.id;
       try {
-        const res = await axios.get(`http://192.168.3.110/vuehman/getHmanPage/${id}`);
+        const res = await axios.get(`http://192.168.3.110:8080/vuehman/getHmanPage/${id}`);
         this.hman = res.data.hman;
         this.images = res.data.images || [];
         this.upUrl = res.data.upUrl;
@@ -83,7 +83,7 @@ export default {
     async updateImages() {
       if (!this.hman || !this.hman.id) return;
       try {
-        await axios.get(`http://192.168.3.110/vuehman/download/${this.hman.id}`);
+        await axios.get(`http://192.168.3.110:8080/vuehman/download/${this.hman.id}`);
         this.showUpdateBtn = false;
         this.$toast && this.$toast.success('已请求更新');
       } catch (e) {

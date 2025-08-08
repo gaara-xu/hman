@@ -44,7 +44,7 @@ export default {
   methods: {
     async fetchTags() {
       try {
-        const res = await axios.get('http://192.168.3.110/vuehman/getHmanTag');
+        const res = await axios.get('http://192.168.3.110:8080/vuehman/getHmanTag');
         this.tags = Array.isArray(res.data) ? res.data : (res.data.list || []);
       } catch (e) {
         this.$toast && this.$toast.fail('获取标签失败');
@@ -53,7 +53,7 @@ export default {
     async selectTag(tag) {
       this.selectedTag = tag;
       try {
-        const res = await axios.get(`http://192.168.3.110/vuehman/searchAllByTag/${encodeURIComponent(tag)}`);
+        const res = await axios.get(`http://192.168.3.110:8080/vuehman/searchAllByTag/${encodeURIComponent(tag)}`);
         this.comics = Array.isArray(res.data) ? res.data : (res.data.list || []);
       } catch (e) {
         this.$toast && this.$toast.fail('标签漫画获取失败');

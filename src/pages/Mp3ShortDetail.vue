@@ -29,7 +29,7 @@ export default {
   methods: {
     async fetchDetail() {
       try {
-        const res = await axios.get(`http://192.168.3.110/vuehman/getMp3Info/${encodeURIComponent(this.name)}`);
+        const res = await axios.get(`http://192.168.3.110:8080/vuehman/getMp3Info/${encodeURIComponent(this.name)}`);
         this.episodes = res.data || [];
       } catch (e) {
         this.episodes = [];

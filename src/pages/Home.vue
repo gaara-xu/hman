@@ -63,7 +63,7 @@ export default {
     },
     async fetchDailyUpdate() {
       try {
-        const res = await axios.get('http://192.168.3.110/vuehman/getDailyUpdate');
+        const res = await axios.get('http://192.168.3.110:8080/vuehman/getDailyUpdate');
         this.comics = Array.isArray(res.data) ? res.data : (res.data.list || []);
       } catch (e) {
         this.$toast && this.$toast.fail('获取更新失败');
@@ -73,7 +73,7 @@ export default {
       const keyword = this.searchKeyword;
       if (!keyword) return;
       try {
-        const res = await axios.get(`http://192.168.3.110/vuehman/searchAllByHmanname/${encodeURIComponent(keyword)}`);
+        const res = await axios.get(`http://192.168.3.110:8080/vuehman/searchAllByHmanname/${encodeURIComponent(keyword)}`);
         this.comics = Array.isArray(res.data) ? res.data : (res.data.list || []);
       } catch (e) {
         this.$toast && this.$toast.fail('搜索失败');

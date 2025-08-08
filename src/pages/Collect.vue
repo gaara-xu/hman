@@ -39,7 +39,7 @@ export default {
   methods: {
     async fetchCollect() {
       try {
-        const res = await axios.get('http://192.168.3.110/vuehman/getHmanCollect');
+        const res = await axios.get('http://192.168.3.110:8080/vuehman/getHmanCollect');
         this.comics = Array.isArray(res.data) ? res.data : (res.data.list || []);
       } catch (e) {
         this.$toast && this.$toast.fail('获取收藏失败');
@@ -47,7 +47,7 @@ export default {
     },
     async removeCollect(id) {
       try {
-        await axios.get(`http://192.168.3.110/vuehman/removeHmanCollect/${id}`);
+        await axios.get(`http://192.168.3.110:8080/vuehman/removeHmanCollect/${id}`);
         this.$toast && this.$toast.success('已取消收藏');
         this.fetchCollect();
       } catch (e) {
