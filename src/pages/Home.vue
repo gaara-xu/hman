@@ -79,7 +79,13 @@ export default {
     async fetchDailyUpdate() {
       try {
         const res = await axios.get('http://192.168.3.110:8080/vuehman/getDailyUpdate');
-        this.comics = Array.isArray(res.data) ? res.data : (res.data.list || []);
+        let comics = Array.isArray(res.data) ? res.data : (res.data.list || []);
+        // 已收藏的排前面
+        this.comics = comics.slice().sort((a, b) => {
+          const aFav = a.bookmark === '已收藏' ? 1 : 0;
+          const bFav = b.bookmark === '已收藏' ? 1 : 0;
+          return bFav - aFav;
+        });
       } catch (e) {
         this.$toast && this.$toast.fail('获取更新失败');
       }
@@ -89,7 +95,12 @@ export default {
       if (!keyword) return;
       try {
         const res = await axios.get(`http://192.168.3.110:8080/vuehman/searchAllByHmanname/${encodeURIComponent(keyword)}`);
-        this.comics = Array.isArray(res.data) ? res.data : (res.data.list || []);
+        let comics = Array.isArray(res.data) ? res.data : (res.data.list || []);
+        this.comics = comics.slice().sort((a, b) => {
+          const aFav = a.bookmark === '已收藏' ? 1 : 0;
+          const bFav = b.bookmark === '已收藏' ? 1 : 0;
+          return bFav - aFav;
+        });
       } catch (e) {
         this.$toast && this.$toast.fail('搜索失败');
       }
