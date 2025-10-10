@@ -5,7 +5,22 @@
     </div>
     <div class="comic-list-grid">
       <div v-for="comic in comics" :key="comic.id" class="comic-card">
-        <img class="comic-img" :src="comic.var2 ? comic.var2 : comic.hmanlogo" :alt="comic.hmanname" @click="goDetail(comic.id)" />
+        <div class="img-wrap">
+          <img class="comic-img" :src="comic.var2 ? comic.var2 : comic.hmanlogo" :alt="comic.hmanname" @click="goDetail(comic.id)" />
+          <span v-if="comic.bookmark === '已收藏'" class="collect-corner" title="已收藏">
+            <svg width="0" height="0">
+              <defs>
+                <linearGradient id="collectGold" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#ffe082"/>
+                  <stop offset="100%" stop-color="#ffb300"/>
+                </linearGradient>
+              </defs>
+            </svg>
+            <div class="corner-triangle">
+              <span class="corner-star">★</span>
+            </div>
+          </span>
+        </div>
         <div class="comic-title" @click="goDetail(comic.id)">{{ comic.hmanname }}</div>
         <div class="comic-update">
           <template v-if="comic.hmanover">
@@ -155,13 +170,48 @@ export default {
 .comic-card:hover {
   box-shadow: 0 4px 16px rgba(0,0,0,0.10);
 }
-.comic-img {
+.img-wrap {
+  position: relative;
   width: 100px;
   height: 140px;
+  margin-bottom: 8px;
+}
+.comic-img {
+  width: 100%;
+  height: 100%;
   object-fit: cover;
   border-radius: 6px;
-  margin-bottom: 8px;
   background: #eee;
+}
+.collect-corner {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 0;
+  height: 0;
+  z-index: 2;
+}
+.corner-triangle {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, #ffe082 0%, #ffb300 100%);
+  clip-path: polygon(100% 0, 0 100%, 100% 100%);
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+}
+.corner-star {
+  color: #fff;
+  font-size: 18px;
+  font-weight: bold;
+  position: absolute;
+  right: 4px;
+  bottom: 2px;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.10);
+  pointer-events: none;
 }
 .comic-title {
   font-size: 16px;
