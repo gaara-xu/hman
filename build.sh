@@ -1,7 +1,7 @@
 #!/bin/bash
-# 自动化构建脚本，适用于 book 分支
+# 自动化构建脚本，适用于 tiktok 分支
 set -e
-git pull origin hman
+git pull origin tiktok
 # 清理旧的构建目录
 rm -rf dist
 rm -rf node_modules
@@ -21,7 +21,7 @@ docker exec node2 npm run build
 
 
 # 迁移dist
-mv /gaara/Code/staticPage/dist /gaara/Code/hman/
+mv /gaara/Code/staticPage/dist /gaara/Code/tiktok/
 # 重载 Nginx
 echo "==> 重载 Nginx 配置"
 nginx -s reload

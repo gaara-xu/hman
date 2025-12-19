@@ -10,4 +10,4 @@ fi
 git add .
 git commit -m "$msg"
 git pull --rebase
-git push origin hman
+git push origin tiktok
