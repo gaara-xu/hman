@@ -249,7 +249,8 @@ const onTouchEnd = async (e) => {
     if (Math.abs(diffY) > thresholdY) {
       const currentId = videos.value[activeIndex.value] && videos.value[activeIndex.value].id;
       if (currentId != null) {
-        const targetId = diffY < 0 ? currentId - 1 : currentId + 1;
+        // 用户要求：向上滑动 => id + 1，向下滑动 => id - 1
+        const targetId = diffY < 0 ? currentId + 1 : currentId - 1;
         await setCurrentId(targetId);
         await fetchList(targetId);
       }
