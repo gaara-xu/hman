@@ -89,14 +89,39 @@ const audioUnlocked = ref(false);
 // 设置当前 id（通知后端）
 /* setCurrentId 已在文件上方定义并用于导航 */
 
+const applyAudioState = (el, forceMuted = false) => {
+  el.muted = forceMuted || !audioUnlocked.value;
+  el.volume = 1;
+};
+
+const playVideo = async (el) => {
+  applyAudioState(el);
+  try {
+    await el.play();
+    return true;
+  } catch (err) {
+    if (!audioUnlocked.value) {
+      console.warn('playVideo: muted play rejected', err);
+      return false;
+    }
+
+    // Chrome 移动端可能拒绝异步切换后的有声自动播放，降级为静音播放避免黑屏卡住。
+    applyAudioState(el, true);
+    try {
+      await el.play();
+      return true;
+    } catch (mutedErr) {
+      console.warn('playVideo: fallback muted play rejected', mutedErr);
+      return false;
+    }
+  }
+};
+
 const updatePlayState = () => {
   videoRefs.value.forEach((el, i) => {
     if (!el) return;
     if (i === activeIndex.value) {
-      // 按用户是否解锁声音决定 muted
-      el.muted = !audioUnlocked.value;
-      el.volume = 1;
-      el.play().catch(() => {});
+      playVideo(el);
     } else {
       el.pause();
       el.currentTime = 0;
@@ -127,8 +152,7 @@ const togglePlay = async (idx, ev) => {
 
   if (el.paused) {
     // 点击视频只负责播放/暂停，声音状态由右侧按钮独立控制
-    el.muted = !audioUnlocked.value;
-    el.volume = 1;
+    applyAudioState(el);
 
     // 如果 readyState 低，先 load 一下再试
     if (el.readyState < HTMLMediaElement.HAVE_ENOUGH_DATA) {
@@ -139,7 +163,7 @@ const togglePlay = async (idx, ev) => {
       }
     }
 
-    let ok = await tryPlay();
+    let ok = await playVideo(el);
     if (!ok) {
       // 第二次尝试：短延迟后再试
       await new Promise(r => setTimeout(r, 120));
@@ -166,8 +190,10 @@ const toggleAudio = () => {
   audioUnlocked.value = !audioUnlocked.value;
   const el = videoRefs.value[activeIndex.value];
   if (!el) return;
-  el.muted = !audioUnlocked.value;
-  el.volume = 1;
+  applyAudioState(el);
+  if (!el.paused) {
+    playVideo(el);
+  }
 };
 
 // 如果需要横向快进/快退，可在此处恢复实现并在模板或手势中调用
