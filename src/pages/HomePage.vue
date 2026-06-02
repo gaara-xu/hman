@@ -46,10 +46,6 @@ const videos = ref([]);
 const activeIndex = ref(0);
 const videoRefs = ref([]);
 
-// 手势 refs（必须先是 ref，再用于 computed）
-const offsetPx = ref(0);
-const isMoving = ref(false);
-
 const touch = {
   startY: 0,
   startX: 0,
@@ -70,11 +66,10 @@ const feedRef = ref(null);
 
 const feedStyle = computed(() => {
   const baseOffsetPx = -activeIndex.value * cardHeight.value;
-  const dragOffsetPx = offsetPx.value;
 
   return {
-    transform: `translateY(${baseOffsetPx + dragOffsetPx}px)`,
-    transition: isMoving.value ? 'none' : 'transform 0.35s cubic-bezier(0.25, 1, 0.5, 1)',
+    transform: `translateY(${baseOffsetPx}px)`,
+    transition: 'none',
     display: 'flex',
     flexDirection: 'column',
     height: '100%'
@@ -96,6 +91,7 @@ const updatePlayState = () => {
     if (i === activeIndex.value) {
       // 按用户是否解锁声音决定 muted
       el.muted = !audioUnlocked.value;
+      el.volume = 1;
       el.play().catch(() => {});
     } else {
       el.pause();
@@ -126,8 +122,7 @@ const togglePlay = async (idx, ev) => {
   };
 
   if (el.paused) {
-    // 用户交互：解除静音并尝试播放
-    audioUnlocked.value = true;
+    // 点击视频只负责播放/暂停，声音状态由右侧按钮独立控制
     el.muted = !audioUnlocked.value;
     el.volume = 1;
 
@@ -165,7 +160,10 @@ const togglePlay = async (idx, ev) => {
 
 const toggleAudio = () => {
   audioUnlocked.value = !audioUnlocked.value;
-  updatePlayState();
+  const el = videoRefs.value[activeIndex.value];
+  if (!el) return;
+  el.muted = !audioUnlocked.value;
+  el.volume = 1;
 };
 
 // 如果需要横向快进/快退，可在此处恢复实现并在模板或手势中调用
@@ -183,17 +181,11 @@ const onTouchStart = (e) => {
   touch.startY = t.clientY;
   touch.startX = t.clientX;
   touch.startTime = Date.now();
-  isMoving.value = true;
 };
 
 const onTouchMove = (e) => {
   // 必须 preventDefault：很多 WebView/iOS 不然会被系统手势吞掉
   if (e.cancelable) e.preventDefault();
-  if (!isMoving.value) return;
-
-  const t = e.touches && e.touches[0];
-  if (!t) return;
-  offsetPx.value = t.clientY - touch.startY;
 };
 
 const attachTouch = () => {
@@ -223,13 +215,8 @@ const onWheel = async (e) => {
 };
 
 const onTouchEnd = async (e) => {
-  isMoving.value = false;
-
   const t = e.changedTouches && e.changedTouches[0];
-  if (!t) {
-    offsetPx.value = 0;
-    return;
-  }
+  if (!t) return;
 
   const endY = t.clientY;
   const endX = t.clientX;
@@ -257,7 +244,6 @@ const onTouchEnd = async (e) => {
     }
   }
 
-  offsetPx.value = 0;
   await nextTick();
   updatePlayState();
 };
