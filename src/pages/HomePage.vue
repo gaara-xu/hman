@@ -21,15 +21,15 @@
           <div class="info-section">
             <div class="title">{{ formatTitle(v.title) }}</div>
           </div>
-
-          <div class="side-bar">
-            <button class="action-btn" @click.stop="toggleAudio">
-              <div class="icon">{{ audioUnlocked ? '🔊' : '🔇' }}</div>
-              <div class="text">{{ audioUnlocked ? '关闭' : '开启' }}</div>
-            </button>
-          </div>
         </div>
       </div>
+    </div>
+
+    <div v-if="videos.length > 0" class="side-bar">
+      <button class="action-btn" @click.stop="toggleAudio">
+        <div class="icon">{{ audioUnlocked ? '🔊' : '🔇' }}</div>
+        <div class="text">{{ audioUnlocked ? '关闭' : '开启' }}</div>
+      </button>
     </div>
 
     <div v-if="videos.length === 0" class="empty">视频库空空如也...</div>
@@ -61,7 +61,11 @@ const setVideoRef = (el, idx) => {
   if (el) videoRefs.value[idx] = el;
 };
 
-const cardHeight = ref(window.innerHeight);
+const getViewportHeight = () => {
+  return (window.visualViewport && window.visualViewport.height) || window.innerHeight;
+};
+
+const cardHeight = ref(getViewportHeight());
 const feedRef = ref(null);
 
 const feedStyle = computed(() => {
@@ -249,14 +253,20 @@ const onTouchEnd = async (e) => {
 };
 
 const updateCardHeight = () => {
-  // 以第一个 video-card 的实际高度为准，回退到窗口高度
+  // 移动端 Chrome 地址栏会改变可视高度，优先使用实际卡片高度和 visualViewport
   const el = document.querySelector('.video-card');
-  cardHeight.value = (el && el.clientHeight) || window.innerHeight;
+  cardHeight.value = (el && el.clientHeight) || getViewportHeight();
 };
 
 window.addEventListener('resize', updateCardHeight);
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', updateCardHeight);
+}
 onBeforeUnmount(() => {
   window.removeEventListener('resize', updateCardHeight);
+  if (window.visualViewport) {
+    window.visualViewport.removeEventListener('resize', updateCardHeight);
+  }
   detachTouch();
 });
 
@@ -302,14 +312,13 @@ onMounted(() => {
 <style scoped>
 .tiktok-root {
   height: 100vh;
+  height: 100svh;
+  height: 100dvh;
   width: 100vw;
   overflow: hidden;
   background: #000;
   position: relative;
   touch-action: none;
-  /* 处理 iOS 刘海/状态栏安全区，避免顶部出现亮条或空白 */
-  padding-top: env(safe-area-inset-top, 0px);
-  padding-top: constant(safe-area-inset-top, 0px);
 }
 
 .feed {
@@ -322,6 +331,8 @@ onMounted(() => {
 .video-card {
   width: 100%;
   height: 100vh;
+  height: 100svh;
+  height: 100dvh;
   flex-shrink: 0;
   position: relative;
   overflow: hidden;
@@ -349,22 +360,47 @@ video {
   color: white;
   pointer-events: none;
   z-index: 10;
+  box-sizing: border-box;
 }
 
 .info-section { text-align: left; }
 .title { font-size: 0.95rem; text-shadow: 1px 1px 2px #000; }
 
-.side-bar { pointer-events: auto; }
+.side-bar {
+  position: fixed;
+  right: max(12px, env(safe-area-inset-right, 0px));
+  bottom: max(88px, calc(env(safe-area-inset-bottom, 0px) + 72px));
+  z-index: 20;
+  pointer-events: auto;
+}
 .action-btn {
   background: rgba(255, 255, 255, 0.1);
-  padding: 10px;
+  width: 54px;
+  min-height: 54px;
+  padding: 8px 6px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 50%;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
+  color: #fff;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 .action-btn .icon { font-size: 20px; }
-.action-btn .text { font-size: 10px; margin-top: 2px; }
+.action-btn .text {
+  font-size: 10px;
+  line-height: 1;
+  margin-top: 3px;
+  white-space: nowrap;
+}
+
+@media (max-height: 640px) {
+  .side-bar {
+    bottom: max(64px, calc(env(safe-area-inset-bottom, 0px) + 48px));
+  }
+}
 
 .empty { color: #555; padding-top: 45vh; text-align: center; }
 </style>
