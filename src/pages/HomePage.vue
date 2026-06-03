@@ -15,6 +15,9 @@
           loop
           preload="auto"
           @click="togglePlay(idx, $event)"
+          @timeupdate="syncProgress(idx, $event)"
+          @loadedmetadata="syncProgress(idx, $event)"
+          @durationchange="syncProgress(idx, $event)"
         ></video>
 
         <div class="overlay">
@@ -32,6 +35,26 @@
       </button>
     </div>
 
+    <div
+      v-if="videos.length > 0"
+      class="progress-bar"
+      @click.stop
+      @touchstart.stop
+      @touchmove.stop
+      @touchend.stop
+    >
+      <input
+        class="progress-input"
+        type="range"
+        min="0"
+        max="1000"
+        step="1"
+        :value="progressValue"
+        :style="progressStyle"
+        @input="seekToProgress"
+      />
+    </div>
+
     <div v-if="videos.length === 0" class="empty">视频库空空如也...</div>
   </div>
 </template>
@@ -45,10 +68,11 @@ const API_ROOT = 'http://192.168.3.110:8080';
 const videos = ref([]);
 const activeIndex = ref(0);
 const videoRefs = ref([]);
+const currentTime = ref(0);
+const duration = ref(0);
 
 const touch = {
   startY: 0,
-  startX: 0,
   startTime: 0
 };
 
@@ -82,6 +106,19 @@ const feedStyle = computed(() => {
 
 // 音频解锁状态（放在前面以供 updatePlayState 使用）
 const audioUnlocked = ref(false);
+
+const progressValue = computed(() => {
+  if (!duration.value) return 0;
+  return Math.round((currentTime.value / duration.value) * 1000);
+});
+
+const progressPercent = computed(() => {
+  return Math.max(0, Math.min(100, progressValue.value / 10));
+});
+
+const progressStyle = computed(() => ({
+  background: `linear-gradient(to right, rgba(255,255,255,0.9) ${progressPercent.value}%, rgba(255,255,255,0.28) ${progressPercent.value}%)`
+}));
 
 // 通过 id 请求视频列表并更新视图
 /* fetchList 已在文件上方定义并用于导航 */
@@ -127,6 +164,29 @@ const updatePlayState = () => {
       el.currentTime = 0;
     }
   });
+};
+
+const resetPlaybackState = () => {
+  audioUnlocked.value = false;
+  currentTime.value = 0;
+  duration.value = 0;
+};
+
+const syncProgress = (idx, ev) => {
+  if (idx !== activeIndex.value) return;
+  const el = ev && ev.currentTarget;
+  if (!el) return;
+  currentTime.value = el.currentTime || 0;
+  duration.value = Number.isFinite(el.duration) ? el.duration : 0;
+};
+
+const seekToProgress = (ev) => {
+  const el = videoRefs.value[activeIndex.value];
+  if (!el || !duration.value) return;
+  const value = Number(ev.target.value);
+  const nextTime = (value / 1000) * duration.value;
+  el.currentTime = Math.max(0, Math.min(duration.value, nextTime));
+  currentTime.value = el.currentTime;
 };
 
 const togglePlay = async (idx, ev) => {
@@ -196,20 +256,10 @@ const toggleAudio = () => {
   }
 };
 
-// 如果需要横向快进/快退，可在此处恢复实现并在模板或手势中调用
-
-const seekVideo = (seconds) => {
-  const el = videoRefs.value[activeIndex.value];
-  if (!el) return;
-  const dur = el.duration || 0;
-  el.currentTime = Math.max(0, Math.min(dur, el.currentTime + seconds));
-};
-
 const onTouchStart = (e) => {
   const t = e.touches && e.touches[0];
   if (!t) return;
   touch.startY = t.clientY;
-  touch.startX = t.clientX;
   touch.startTime = Date.now();
 };
 
@@ -249,28 +299,18 @@ const onTouchEnd = async (e) => {
   if (!t) return;
 
   const endY = t.clientY;
-  const endX = t.clientX;
   const diffY = endY - touch.startY;
-  const diffX = endX - touch.startX;
 
   const thresholdY = cardHeight.value / 6; // 翻页阈值（基于卡片高度）
-  const thresholdX = 60; // 横向快进阈值
 
-  // 如果水平方向位移更大且超过阈值，则视为快进/快退手势
-  if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > thresholdX) {
-    // 右滑（diffX>0） => 快进，左滑 => 快退
-    if (diffX > 0) seekVideo(10);
-    else seekVideo(-10);
-  } else {
-    // 垂直翻页逻辑：按用户要求基于 id 进行导航（上滑 id-1，下滑 id+1），然后重新拉取视频列表
-    if (Math.abs(diffY) > thresholdY) {
-      const currentId = videos.value[activeIndex.value] && videos.value[activeIndex.value].id;
-      if (currentId != null) {
-        // 用户要求：向上滑动 => id + 1，向下滑动 => id - 1
-        const targetId = diffY < 0 ? currentId + 1 : currentId - 1;
-        await setCurrentId(targetId);
-        await fetchList(targetId);
-      }
+  // 垂直翻页逻辑：按用户要求基于 id 进行导航（上滑 id-1，下滑 id+1），然后重新拉取视频列表
+  if (Math.abs(diffY) > thresholdY) {
+    const currentId = videos.value[activeIndex.value] && videos.value[activeIndex.value].id;
+    if (currentId != null) {
+      // 用户要求：向上滑动 => id + 1，向下滑动 => id - 1
+      const targetId = diffY < 0 ? currentId + 1 : currentId - 1;
+      await setCurrentId(targetId);
+      await fetchList(targetId);
     }
   }
 
@@ -303,6 +343,7 @@ const fetchList = async (startId) => {
     const params = startId !== undefined && startId !== null ? { params: { id: startId } } : {};
     const res = await axios.get(`${API_ROOT}/tiktok/tiktokList`, params);
     const list = Array.isArray(res.data) ? res.data : [];
+    resetPlaybackState();
     videos.value = list.map(it => ({ id: it.id, src: it.url, title: it.name }));
     activeIndex.value = 0;
     await nextTick();
@@ -420,6 +461,63 @@ video {
   line-height: 1;
   margin-top: 3px;
   white-space: nowrap;
+}
+
+.progress-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: env(safe-area-inset-bottom, 0px);
+  height: 18px;
+  z-index: 30;
+  display: flex;
+  align-items: flex-end;
+  opacity: 0.7;
+  pointer-events: auto;
+}
+
+.progress-input {
+  width: 100%;
+  height: 18px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.progress-input::-webkit-slider-runnable-track {
+  height: 4px;
+  border: 0;
+}
+
+.progress-input::-webkit-slider-thumb {
+  width: 18px;
+  height: 18px;
+  margin-top: -7px;
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.45);
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.progress-input::-moz-range-track {
+  height: 4px;
+  border: 0;
+  background: transparent;
+}
+
+.progress-input::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.45);
 }
 
 @media (max-height: 640px) {
