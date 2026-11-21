@@ -206,16 +206,27 @@ export default {
   background: rgba(255,87,34,0.08);
 }
 @media (max-width: 800px) {
+  .comic-reader {
+    padding-bottom: calc(52px + env(safe-area-inset-bottom, 0px));
+  }
+  .comic-reader-images {
+    width: calc(100% - 16px);
+  }
+  .comic-img {
+    display: block;
+    height: auto;
+  }
   .comic-reader-nav,
   .custom-nav {
-    font-size: 20px;
-    padding: 18px 0 18px 0;
+    font-size: 16px;
+    padding: 0 0 env(safe-area-inset-bottom, 0px);
     border-radius: 12px 12px 0 0;
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
   }
   .nav-btn {
+    line-height: 44px;
     padding: 0 10px;
     font-size: 0.98em;
     min-width: 0;
