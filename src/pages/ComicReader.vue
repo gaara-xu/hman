@@ -247,8 +247,7 @@ export default {
   }
 }
 @media (max-width: 600px) {
-  .comic-reader-images,
-  .custom-nav {
+  .comic-reader-images {
     width: var(--mobile-comic-width, 60vw);
   }
   .nav-btn {
