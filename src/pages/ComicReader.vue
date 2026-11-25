@@ -234,6 +234,17 @@ export default {
     text-align: center;
   }
 }
+@media (max-width: 600px) {
+  .comic-reader-images,
+  .custom-nav {
+    width: 59vw;
+  }
+  .nav-btn {
+    padding: 0;
+    font-size: clamp(12px, 3.4vw, 15px);
+    white-space: nowrap;
+  }
+}
 .update-center-btn {
   position: fixed;
   left: 0;
