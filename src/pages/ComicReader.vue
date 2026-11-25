@@ -1,5 +1,5 @@
 <template>
-  <div class="comic-reader" v-if="hman">
+  <div class="comic-reader" v-if="hman" :style="{'--mobile-comic-width': mobileWidth+'vw'}">
     <div v-if="images.length" class="comic-reader-images">
       <img v-for="img in sortedImages" :key="img.url" :src="img.url" class="comic-img" />
     </div>
@@ -26,6 +26,7 @@ export default {
   data() {
     return {
       hman: null,
+      mobileWidth: 60,
       images: [],
       upUrl: '',
       nextUrl: '',
@@ -42,7 +43,9 @@ export default {
       return this.images;
     }
   },
+  // 页面打开时独立读取宽度，不影响章节内容加载。
   created() {
+    this.loadMobileWidth();
     this.fetchPage();
   },
   watch: {
@@ -55,6 +58,15 @@ export default {
     }
   },
   methods: {
+    /** 读取后台保存的手机显示宽度，无效或不可用时沿用 60%。 */
+    async loadMobileWidth() {
+      try {
+        const res = await axios.get('http://192.168.3.110:8080/ai/configs');
+        const row = res.data.items.find(item => item.kname === '手机漫画显示宽度');
+        const width = Number(row && row.kvalue);
+        if (Number.isInteger(width) && width >= 1 && width <= 100) this.mobileWidth = width;
+      } catch { /* 配置不可用时使用默认宽度。 */ }
+    },
     async fetchPage() {
       const id = this.$route.params.id;
       try {
@@ -237,7 +249,7 @@ export default {
 @media (max-width: 600px) {
   .comic-reader-images,
   .custom-nav {
-    width: 59vw;
+    width: var(--mobile-comic-width, 60vw);
   }
   .nav-btn {
     padding: 0;
