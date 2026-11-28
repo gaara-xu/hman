@@ -5,8 +5,7 @@
       <span class="site-menu" :class="{active: isActive('update')}" @click="go('/')">更新</span>
       <span class="site-menu" :class="{active: isActive('category')}" @click="go('/tag')">分类</span>
       <span class="site-menu" :class="{active: isActive('favorite')}" @click="go('/collect')">收藏</span>
-      <span class="site-menu" :class="{active: isActive('mp3long')}" @click="go('/mp3long')">MP3长篇小说</span>
-      <span class="site-menu" :class="{active: isActive('mp3short')}" @click="go('/mp3short')">MP3短篇</span>
+      <span class="site-menu" :class="{active: isActive('random')}" @click="goRandom()">随机</span>
     </div>
     <div class="header-search-row">
       <van-search
@@ -39,12 +38,14 @@ export default {
     go(path) {
       if (this.$route.path !== path) this.$router.push(path)
     },
+    goRandom() {
+      this.$router.push({ path: '/random', query: { t: Date.now() } });
+    },
     isActive(type) {
       if (type === 'update') return this.$route.path === '/';
       if (type === 'category') return this.$route.path.startsWith('/tag');
       if (type === 'favorite') return this.$route.path.startsWith('/collect');
-      if (type === 'mp3long') return this.$route.path.startsWith('/mp3long');
-      if (type === 'mp3short') return this.$route.path.startsWith('/mp3short');
+      if (type === 'random') return this.$route.path.startsWith('/random');
       return false;
     },
     onSearch() {

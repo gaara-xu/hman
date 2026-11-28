@@ -14,6 +14,7 @@ const routes = [
   { path: '/search', name: 'SearchResult', component: SearchResult },
   { path: '/collect', name: 'Collect', component: () => import('./pages/Collect.vue') },
   { path: '/tag', name: 'Tag', component: () => import('./pages/Tag.vue') },
+  { path: '/random', name: 'Random', component: () => import('./pages/Random.vue') },
   { path: '/mp3long', name: 'Mp3Long', component: () => import('./pages/Mp3Long.vue') },
   { path: '/mp3long/:name', name: 'Mp3LongDetail', component: () => import('./pages/Mp3LongDetail.vue') },
   { path: '/mp3short', name: 'Mp3Short', component: () => import('./pages/Mp3Short.vue') }
